@@ -1,1 +1,1455 @@
-# djangostudy
+## 学习目标
+
++ 建立一个Django项目,创立一个基本的Django应用.
++ 为Django项目设立静态文件和其他文件
++ 使用Django的Model-View-Template(MVT)设计模式
++ 创建数据库模型,用Django提供的对象关系绑定功能
++ 利用数据库模型生成的数据来创建动态生成页面
++ 使用Django提供的用户认证服务
++ 整合应用的外部服务
++ 一个web应用所包括的CSS和JavaScript
++ 设计和应用CSS来增加web应用的界面交互
++ 使用Django的cookies和sessions
++ 在应用中使用像AJAX这样的高级功能
++ 用PythonAnywhere部署你的应用到web服务器
+
+## 初始设计和规划
+
+我们先前提到过,这本书的要点是开发一个叫做Rango的应用.为了开发这个应用,它将会覆盖我们制作web应用大部分核心内容.
+
+## 设计概要
+
++ 你的客户端需要建立一个叫做Rango的网站,它可以让用户浏览它们自己订制的网页.
++ 在网站的主页上,让浏览者看到:
+    + 5个查看最多的页面
+    + 5个质量最高的目录
+    + 访客浏览或者查找目录的方法
+    + 当一个用户查看一个目录页,将会展现:目录名称,访问数量,喜欢数量;
+    + 与目录相近的页面(展示页面标题和它的url);
+    + 一个特殊的目录,客户端希望目录的名字,每个目录页面被访问的次数和多少个用户点击'like'按钮被记录.
+    + 每个目录都可以通过一个可读的URL访问，比如. /rango/books-about-django/.
+    + 只有注册的用户才能为目录增加页面.同时,访问者可以注册一个账户.
+第一眼看上去,这个应用看起来很奇怪.事实上,它就是一个目录列表,他们可以链接到页面,对吗?然而,这里还有许多复杂的东西需要处理.首先,让我们试着画一张图来展示我们要开发什么东西.
+
+见效果图
+
+## 环境准备
+
+使用python2.7环境，你应该安装如下环境：
+
+    (rango)itcast@itcast:~/workspace/itcast_project$ pip list
+    Django (1.7.8)
+    ipdb (0.8.1)
+    ipython (3.2.0)
+    Pillow (2.8.2)
+    pip (7.0.3)
+    setuptools (17.0)
+    wheel (0.24.0)
+
+把以上包名存储到package.txt，在你的python虚拟环境中，运行:
+    pip install -r package.txt
+
+
+## helloworld项目
+
+1.创建项目工程
+
+    django-admin startproject itcast_project
+
+2.目录解释
+
+itcast_project/
+├── itcast_project       -项目设置目录
+│?? ├── __init__.py      -空的脚本,告诉Python编译器这个目录是一个Python包
+│?? ├── settings.py      -用来存储Django项目设置的文件
+│?? ├── urls.py          -用来存储项目里的URL模式
+│?? └── wsgi.py          -帮助你运行开发服务,同时可以帮助部署你的生产环境
+└── manage.py            -提供了一系列的Django命令，开发时常用
+
+3.生成相关数据表
+
+    cd itcast_project
+    python manage.py migrate
+
+4.运行项目，默认使用端口8000
+
+    python manage.py runserver
+
+5.浏览器输入以下地址
+    
+    http://127.0.0.1:8000/
+
+![helloworld.png][1]
+
+
+6.创建Django应用
+
+    python manage.py startapp rango
+
+(rango)itcast@itcast:~/workspace/itcast_project$ python manage.py startapp rango
+(rango)itcast@itcast:~/workspace/itcast_project$ tree
+.
+├── db.sqlite3            -默认使用的sqlite3数据库，migrate那步生成的
+├── itcast_project
+│?? ├── __init__.py
+│?? ├── settings.py
+│?? ├── urls.py
+│?? └── wsgi.py
+├── manage.py
+└── rango                 -app应用目录，相当于整个项目的一个子模块
+    ├── admin.py          -向Django注册你的模型,它会为你创建Django的管理界面
+    ├── __init__.py
+    ├── migrations
+    │?? └── __init__.py
+    ├── models.py         -存储此应用中数据模型的地方，在这里描述数据的实体和关系
+    ├── tests.py          -存储应用的测试代码
+    └── views.py          -处理用户请求和响应
+
+views.py和models.py在每个app应用中都要用到,他们俩是Django设计模式的组成部分,例如Model-View-Template模式.
+
+7.把rango app应用关联到itcast_project项目中
+
+在你创建模型和视图之前,你必须要告诉Django你的新应用的存在.所以你必须修改你配置目录里的settings.py文件.打开文件找到INSTALLED_APPS元组.在元祖的最后面增加rango.
+
+    INSTALLED_APPS = (
+        'django.contrib.admin',
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.messages',
+        'django.contrib.staticfiles',
+        'rango',
+    )
+
+8.创建视图
+
+让我们在rango中创建一个简单的视图.作为我们的第一个视图,简单的把文本传送给客户端。
+
+打开rango目录里的views.py文件.删除注释# Create your views here.现在你得到一个空文件.输入以下代码
+
+    from django.shortcuts import render
+    from django.http import HttpResponse
+    def index(request):
+        return HttpResponse("Rango says hey there world!")
+
++ 我们第一行首先从django.http模块导入HttpResponse对象.
++ 在views.py文件里每个视图对应一个单独的函数.在这个例子中我们只创建了一个index视图.
++ 每个视图至少带一个参数，一个在django.http模块的HttpRequest对象.
++ 每个视图都要返回一个HttpResponse对象.这个HttpResponse对象把一个字符串当做参数传递给客户端.
+
+8.URL映射
+
+在rango目录里,创建一个叫做urls.py的文件.文件里是可以设置你的应用映射到URL.
+
+    from django.conf.urls import patterns, url
+    from rango import views
+    urlpatterns = patterns('',
+        url(r'^$', views.index, name='index'),
+    )
+
+这段代码导入Django自带的映射URL机制.导入rango的view模块引入我们先前建立的视图.
+
+为了建立映射,我们用到了tuple.在Django里必须用urlpatterns来命名这个元组.
+
+这个urlpatterns元组包含一些django.conf.urls.url()函数的调用,而每个函数里都有一个唯一的映射.在上面的代码里,我们只用了url()一次,所以我们只映射了一个URL.django.conf.urls.url()函数的第一个参数是正则表达式^$,指的是匹配一个空字符串.所有匹配这个模式的URL都会映射到views.index()这个视图.用户的请求信息会包含在HttpRequest对象里作为参数传递给视图.我们给url()函数可选参数name赋值为index.
+
+    url(regex, view, kwargs=None, name=None, prefix='')
+    regex:正则匹配
+    view:对应视图函数
+    kwargs:url传参，传递给视图函数
+    name:标识url，区别不同的映射，可用于模板标签中索引
+    prefix:在视图函数前加前缀
+
+9.项目中url和app应用中url关联
+
+项目目录里已经存在了一个urls.py文件.为什么在app中创建另一个呢?事实上,你可以吧所有的项目应用的URL都放在这个文件里.但是这是一个坏的习惯,这回增加你的应用的耦合.各自应用的urls.py文件存放各自应用的URL.为了最小耦合,你可以稍后把它们加入到项目目录的urls.py文件里.
+
+这就意味着我们需要设置itcast_project里的urls.py文件,把我们的rango应用和itcast_project连接.
+
+打开itcast_project目录里的urls.py文件.
+
+    from django.conf.urls import patterns, include, url
+    from django.contrib import admin
+
+    urlpatterns = patterns('',
+        # Examples:
+        # url(r'^$', 'itcast_project.views.home', name='home'),
+        # url(r'^blog/', include('blog.urls')),
+
+        url(r'^admin/', include(admin.site.urls)),
+        url(r'^rango/', include('rango.urls')), # 添加到app的映射，注意','
+    )
+
+新增的映射将会寻找匹配^rango/的url字符串.如果匹配成功的话将会传递给rango.urls(我们已经设置过了).include()函数是从django.conf.urls导入的.整个URL字符串处理过程如下图所示.在这个过程中,域名首先被提取出来然后留下其他的url字符串(rango/)传递给我们的itcast_project,在这里它会匹配并去掉rango/然后把空字符串传递给rango应用.rango现在匹配一个空字符串,它会返回我们创造的index()视图.
+
+10.阶段胜利
++ 运行django服务器,python manage.py runserver
++ 浏览器浏览,http://127.0.0.1:8000/rango/
+
+![helloworldok.png][2]
+
+
+11.总结回顾
+
+1.python manage.py startapp <appname>来创建新的应用,这里<appname>是你的应用名.
+2.把新应用名加入到settings.py文件的INSTALLED_APPS里，使项目关加入新的应用.
+3.在项目的urls.py文件映射应用.
+4.在应用目录里创建urls.py文件使URL字符串指向视图函数.
+5.在应用的view.py里,创建的视图要确保返回一个HttpResponse对象.
+
+12.练习
+
+恭喜你!你已经创建并运行rango了.这是里程碑意义的事件.创建视图和映射是迈向开发更复杂可用的web应用的第一步.现在试着练习一下巩固所学.
+
++ 修改程序,确保你知道如何把URL映射到视图.
++ 创立一个about视图,返回Rango says here is the about page.
++ 把这个视图映射到/rango/about/.在这一步里,你只需要编辑rango应用里的urls.py
++ 修改index视图的HttpResponse,使它返回包含about页面的链接.
++ 在about视图里使它包含一个回到主页的链接.
+
+13.练习提示
+
+如果感觉练习有困难的话,下面将能帮助你完成练习.
+
++ index视图里需要包含about视图的链接.
+
+  Rango says: Hello world! `<br/> <a href='/rango/about'>About</a>`
+
++ 匹配about/的正则表达式是r^about/.
++ 返回主页的链接是`<a href="/rango/">Index</a>` 这个结构和上面的about页面里的一样.
+
+## 模板和静态媒体
+
+1.创建存放模板的目录
++ 在itcast_project项目根目录下，创建templates目录，里面再创建rango目录
+    
+    mkdir -p templates/rango
+
+2.项目中设置模板查找路径，设置itcast_project项目管理目录里settings.py
+
++ 绝对路径，硬编码，不建议，项目迁移到别的服务器时会出问题
+
+    TEMPLATE_DIRS = ['<workspace>/itcast_project/']
+
++ 动态获取路径
+    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+    TEMPLATE_PATH = os.path.join(BASE_DIR, 'templates')
+    TEMPLATE_DIRS = [
+        TEMPLATE_PATH,
+    ]
+
+3.添加模板
+
+在我们创建模板目录和设置好路径以后,我们需要在template/rango/目录里建立一个叫做index.html的文件,在新文件里加入下面代码:
+
+    <!DOCTYPE html>
+    <html>
+
+    <head>
+        <title>Rango</title>
+    </head>
+
+    <body>
+        <h1>Rango says...</h1>
+        hello world! <strong>{{ boldmessage }}</strong><br />
+        <a href="/rango/about/">About</a><br />
+    </body>
+
+    </html>
+
+
+这个HTML代码创建一个问候用户的简单HTML页面.你可能注意到了在上面有一段非HTML代码{{boldmessage}}.这是Django模板的变量,他可以在输出时为这个变量赋值.一会我们就会用它.
+
+为了使用这个模板,我们需要重新修改一下我们先前创建的index()视图.这次我们不让他传递简单的信息,而是让他返回我们的模板.
+
+在rango/views.py里,确定文件头部有如下代码.
+
+    from django.shortcuts import render
+
+修改index()视图函数如下.
+
+    def index(request):
+        context_dict = {'boldmessage': "I am bold font from the context"}
+        return render(request, 'rango/index.html', context_dict)
+
+首先我们建立一个在模板中使用的字典,然后我们调取render()函数.这个函数接受用户的request,模板名称和内容字典作为参数.这个render()函数将会把这些参数聚合到一起生成一个完整的HTML页面.然后返回给用户的浏览器.
+
+当模板文件被加载到Django模板系统里时,它模板内容也会被创建.在简单的例子里模板的内容是字典里的模板变量对应的Python变量.在我们早先创建的模板文件,我们创建了一个叫做boldmessage的模板变量.在index(request)视图例子中,字符串I am bold font from the context映射到模板变量boldmessage.所以字符串I am bold font from the context将会替换模板里所有的{{ boldmessage }}.
+
+现在你已经更新了视图,运行Django服务并访问 http://127.0.0.1:8000/rango/ .你将会看到
+
+![template1.png][3]
+
+## 静态媒体
+
+1.设置静态媒体目录
+
+为了设置静态媒体,你需要设立存储它们的目录.在你的项目目录(例如<workspace>/itcast_project/),创建叫做static的目录.在static里再创建一个images目录.
+
+    mkdir -p static/images
+
+现在在static/images目录里放置一个图片.如果你和我一样也喜欢篮球，那么让我们项目以jordan为第一张图片吧.
+
+![jordan.jpg][4]
+
+
+2.设置项目中静态文件目录
+
+在settings.py文件,我们需要更新两个变量STATIC_URL和STATICFILES_DIRS元组,像下面一样创建一个储存静态目录(STATIC_PATH)的变量.
+
+    STATIC_PATH = os.path.join(BASE_DIR,'static')
+    STATIC_URL = '/static/' #项目中已定义好此变量
+    STATICFILES_DIRS = (
+        STATIC_PATH,
+    )
+
+
+第一个变量STATIC_URL定义了当Django运行时Django应用寻找静态媒体的地址.例如,像我们上面的代码一样吧STATIC_URL设置成/static/,我们就可以通过http://127.0.0.1:8000/static/来访问它了. 
+
+`注意：我们要注意斜杠的书写.如果不这么设置将会引起一大堆麻烦.`
+
+STATIC_URL定义了web服务链接媒体的URL地址,STATICFILES_DIRS允许你定义新的static目录.像TEMPLATE_DIRS元组一样.STATICFILES_DIRS需要static目录的绝对路径.这里,我们还是用BASE_DIR变量来创建STATIC_PATH.
+
+完成了这两个设置后,再一次运行你的Django服务.如果我们想要查看我们的jordan图片,访问http://127.0.0.1:8000/static/images/jordan.jpg.如果没有出现请查看setings.py文件是否设置正确,并重启服务.如果出现了,试着加入其他类型的文件到static目录并在浏览器上访问他们.
+
+![template2.png][5]
+
+3.静态媒体和模板
+
+现在你已经为你的itcast_project项目设置了静态媒体,你可以在你的模板里加入这些媒体.
+
+下面将展示如何加入静态媒体,打开位于<workspace>/itcast_project/templates/rango目录的index.html文件.像下面一样修改HTML源代码.新加入两行用注释标示.
+
+    <!DOCTYPE html>
+
+    {% load staticfiles %} <!-- 模板标签加载静态文件路径 -->
+
+    <html>
+
+    <head>
+        <title>Rango</title>
+    </head>
+
+    <body>
+        <h1>Rango says...</h1>
+        hello world! <strong>{{ boldmessage }}</strong><br />
+        <a href="/rango/about/">About</a><br />
+        <img src="{% static "images/jordan.jpg" %}" alt="Picture of jordan" /> 
+    </body>
+
+    </html>
+
+首先,我们需要使用{% load static %}标签来使用静态媒体.所以我们才可以用{% static "jordan.jpg" %} 在模板里调用static文件.Django模板标签用{ }来表示.在这个例子里我们用static标签,它将会把STATIC_URL和jordan.jpg连接起来,如下所示.
+
+    <img src="/static/images/jordan.jpg" alt="Picture of Jordan" /> 
+
+如果因为什么原因图片不能加载我们可以用一些文本来代替.这就是alt属性的作用，如果图片加载失败就显示alt属性中的文本.
+
+好了,让我们再次运行Django服务访问http://127.0.0.1:8000/rango.幸运的话可以看到下图.
+
+![template3.png][6]
+
+
+4.阶段小结
+
+学完这章,你应当学会如何设置和创建模板,在你的视图里使用模板,设置和使用Django来发送静态媒体文件,我们已经学了很多了，加油!
+
+创建模板并在视图里使用是这章的关键.它需要一些步骤,但是当你尝试几次后就非常容易掌握了.
+
++ 创建你希望使用的模板并把它保存在templates目录里,这个目录需要你写入settings.py文件.你可以在模板里使用Django模板变量(例如{{ bariable_name }}).你可以在视图里更换这些变量.
++ 在应用的views.py文件里查找或者创建一个新的视图.
++ 在视图里,创建一个字典对象可以把模板内容传递给模板引擎.
++ 使用render()函数来生成返回.确保引用request,然后是模板文件,最后是内容字典!
++ 如果你还没有修改urls.py文件或者应用中的urls.py中的映射,你需要修改一下.
++ 在你的页面上获取一个静态媒体文件也是一个你需要掌握的很重要的步骤.
++ 把你要添加的静态文件放入static目录.这个目录是你在settings.py中设置的STATICFILES_DIRS元组.
++ 在模板中添加静态媒体引用.例如一个HTML网页的图片用<img />标签.
++ 记得用{% load staticfiles %}和{% static "filename" %}命令在模板中设置静态文件.
+
+5.练习
+
++ 把about页面也用一个about.html模板来设置.
++ 在about.html模板里,在你的静态媒体里增加图片.
+
+
+## 模型和数据库
+
+通常来说处理数据库需要我们掌握许多复杂的SQL语句.但是在Django里,对象关系映射(ORM)帮我们处理这一切,包括通过模型创建数据库表.事实上,模型是描述你的数据模型/图表的一个Python对象.与以往通过SQL操作数据库不同,你只用使用Python对象就能操作数据库.我们将会学习如何设立数据库并为rango建立模型.
+
+1.rango的需求，首先,让我们看看rango的需求.下面列出了rango数据关键的几个需求.
+
++ rango实际上是一个网页目录 - 一个包含其他我站链接的网站
++ 有许多不同网站的目录,每个目录中包含许多链接.
++ 一个目录要有名字,访问数和链接.
++ 一个页面要有目录,标题,URL和一些视图.
+
+
+2.告诉Django你的数据库，Django会自动在settings.py里添加一个叫做DATABASES的字典.它包含如下.
+
+    DATABASES = {
+        'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
+
+
+能看到默认用SQLite3作为后端数据库.SQLite是个轻量级的数据库对我们开发很有用.我们仅仅需要设置DATABASE_PATH里的NAME键值对.其他引擎需要USER,PASSWORD,HOST和PORT等关键字.
+
+    注意:对于教程来说使用SQLite引擎还好,但是对于部署你的应用来说可能不是最好的选择,或许应当使用其他更健壮和更大型的数据库引擎.Django同样支持像PostgreSQL和MySQL这样的流行数据库引擎.
+
+3.创建模型
+
+让我们为Rango创建两个数据模型.在rango/models.py里,我们定义两个继承自djnago.db.models.Model的类.这两个类分别定义目录和页面.定义Category和Page如下.
+
+    class Category(models.Model):
+        name = models.CharField(max_length=128, unique=True)
+
+        def __unicode__(self):  
+            return self.name
+
+    class Page(models.Model):
+        category = models.ForeignKey(Category)
+        title = models.CharField(max_length=128)
+        url = models.URLField()
+        views = models.IntegerField(default=0)
+
+        def __unicode__(self):      #Python2, use __str__ on Python3
+            return self.title
+
+当你定义了一个模型,你需要制定可选参数的属性以及相关的类型列表.Django提供了许多内建字段.一些常用的如下.
+
+    CharField－存储字符数据的字段(例如字符串).max_length提供了最大长度.
+    URLField－和CharField一样,但是它存储资源的URL.你也可以使用max_length参数.
+    IntegerField－存储整数.
+    DateField－存储Python的datetime.date.
+
+查看Django documentation on model fields获取完整列表.
+
+每个字段都有一个unique属性.如果设置为True,那么在整个数据库模型里它的字段里的值必须是唯一的.例如,我们上面定义的Category模型.name字段被设置为unique - 所以每一个目录的名字都必须是唯一的.
+
+如果你想把这个字段作为数据库的关键字会非常有用.你可以为每个字段设置一个默认值(default='value'),也可以设置成NULL(null=True).
+
+Django也提供了连接模型/表的简单机制.这个机制封装在3个字段里,如下.
+
+    ForeignKey－创建1对多关系的字段类型.
+    OneToOneField－定义一个严格的1对1关系字段类型.
+    ManyToManyFeild－当以多对多关系字段类型.
+
+从上面我们的例子,Page中category字段是ForeignKey类型.所以我们可以创建一个1对多关系的Category模型/表,这个Category会作为构造函数的一个参数.Django会自动的为每个模型表中创建ID字段.所以你不同为每个模型创建主键，它已经为你做好了!
+
+注意:当创建模板的时候,最好创建`__unicode__()`方法 - 等价于`__strr__()`方法.如果你不熟悉这两个方法,它们俩的作用和Java中toString()方法相似.`__unicode__()`方法为模型实例提供unicode表达式.例如我们的Category模型通过`__unicode__()`方法返回目录的名字，当你开始用Django的管理界面后这将会非常便利. 在你的类里加入`__unicode__()`方法对debug也非常有用.如果在Category模型中没有`__unicode__`方法将会返回`<Category: Category object>`.我们只知道是一个目录,但是是哪一个呢?如果我们有`__unicode__()`方法我们将会返回`<Category: python>`,这里的python是目录的名字.
+
+4.创建和迁移数据库
+
++ 创建数据库表
+python manage.py migrate
++ 记录数据模型前后变化
+python manage.py makemigrations <app_name>
++ 根据makemigrations记录的数据模型变化文件再次更新数据表
+python manage.py migrate
+
+5.Django Shell
+
+通过Django shell创建Django模型，它对我们debug非常有用.下面我们将展示如何用这种方式来创建Category实例.
+
+为了得到shell我们需要再一次调用Django项目根目录里的manage.py.
+
+    python manage.py shell
+
+这个实例将会创建一个Python解析器并且载入你的项目的设置.你可以和模型进行交互.下面的命令展示了这一功能.注释里可以看到每个命令的功能.
+
+    # Import the Category model from the rango application
+    >>> from rango.models import Category
+
+    # Show all the current categories
+    >>> print Category.objects.all()
+    [] # Returns an empty list (no categories have been defined!)
+
+    # Create a new category object, and save it to the database.
+    >>> c = Category(name="Test")
+    >>> c.save()
+
+    # Now list all the category objects stored once more.
+    >>> print Category.objects.all()
+    [<Category: test>] # We now have a category called 'test' saved in the database!
+
+    # Quit the Django shell.
+    >>> quit()
+
+在例子中我们首先导入我们需要操作的模型.然后打印出存在的目录,在这里因为我们的图表是空所以输出也是空.然后创建并储存一个目录,打印.
+
+6.设置管理界面
+
+Django最突出的一个特性就是它提供内建的网页管理界面,用来浏览和编辑存储在模型的数据,也可以与数据库图表交互.在settings.py文件里,注意到有一个默认安装的django.contib.adminapp,而且你的urls.py里也默认增加了admin匹配.
+
+
+访问http://127.0.0.1:8000/admin/.可以用先前设置管理员账户的用户名和密码来登录Django管理界面.管理界面只包含Groups和Users图表以我们需要让Django包含rango模块.所以打开rango/admin.py输入如下代码:
+
+    from django.contrib import admin
+    from rango.models import Category, Page
+
+    admin.site.register(Category)
+    admin.site.register(Page)
+
+上面代码会为我们在管理界面注册模型.如果我们想要其他模型,可以在admin.stie.register()函数里传递模型作为参数.
+
+现在你可以创建一个管理员来管理数据库.
+
+    python manage.py createsuperuser
+
+管理员账户将会在Django管理界面登陆时使用.按照提示输入用户名,邮箱地址和密码.注意要记住用户名和密码.
+
+![admin1.png][7]
+
+开启Django服务:
+
+    python manage.py runserver
+
+完成之后重新访问http://127.0.0.1:8000/admin/,你想回看到如下图案.
+
+![admin2.png][8]
+
+![admin.png][9]
+
+7.创建生成测试数据脚本
+
+往数据库里输入数据会非常麻烦.许多开发者会随机的往数据库里输入测试数据.如果你在一个小的开发团队里,每个人都得传点数据.最好是写一个脚本而不是每个人单独的上传数据,这样就可以避免垃圾数据的产生.所以我们需要为你的数据库创建 population script.这个脚本自动的为你的数据库生成测试数据.
+
+我们需要在Django项目的根目录里创建population script(例如<workspace>/itcast_project/).创建populate_rango.py文件代码如下.
+
+    import os
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'itcast_project.settings')
+
+    import django
+    django.setup()
+
+    from rango.models import Category, Page
+
+
+    def populate():
+        python_cat = add_cat('Python')
+
+    add_page(cat=python_cat,
+        title="Official Python Tutorial",
+        url="http://docs.python.org/2/tutorial/")
+
+    add_page(cat=python_cat,
+        title="How to Think like a Computer Scientist",
+        url="http://www.greenteapress.com/thinkpython/")
+
+    add_page(cat=python_cat,
+        title="Learn Python in 10 Minutes",
+        url="http://www.korokithakis.net/tutorials/python/")
+
+    django_cat = add_cat("Django")
+
+    add_page(cat=django_cat,
+        title="Official Django Tutorial",
+        url="https://docs.djangoproject.com/en/1.5/intro/tutorial01/")
+
+    add_page(cat=django_cat,
+        title="Django Rocks",
+        url="http://www.djangorocks.com/")
+
+    add_page(cat=django_cat,
+        title="How to Tango with Django",
+        url="http://www.tangowithdjango.com/")
+
+    frame_cat = add_cat("Other Frameworks")
+
+    add_page(cat=frame_cat,
+        title="Bottle",
+        url="http://bottlepy.org/docs/dev/")
+
+    add_page(cat=frame_cat,
+        title="Flask",
+        url="http://flask.pocoo.org")
+
+    # Print out what we have added to the user.
+    for c in Category.objects.all():
+        for p in Page.objects.filter(category=c):
+            print "- {0} - {1}".format(str(c), str(p))
+
+    def add_page(cat, title, url, views=0):
+        p = Page.objects.get_or_create(category=cat, title=title, url=url, views=views)[0]
+        return p
+
+    def add_cat(name):
+        c = Category.objects.get_or_create(name=name)[0]
+        return c
+
+    # Start execution here!
+    if __name__ == '__main__':
+        print "Starting Rango population script..."
+        populate()
+
+
+虽然看起来有许多代码,但是非常简单.在文件开头我们定义了许多函数,代码会在底部开始执行 寻找`if __name__ == '__main__'`这一行开始.我们调用了populate()函数.
+
+警告:当导入Django模块时确保已经导入了Django设置,并把环境变量DJANGO_SETTINGS_MODULE设置为项目设置文件.然后调用django.setup()来导入django设置.如果不这么做就会引发一场.这就是为什么我们需要在导入设置之后才能导入Category和Page.
+populate()函数负责调用add_cat()和add_page()函数,而这两个函数将会创建新的目录和页面.populate()创建页面和目录并存到数据库.最后我们在终端里输出页面和目录.
+
+注意:我们使用get_or_create()函数创建模型实例.我们可以用get_or_creat()函数来检查在数据库里是否存在.如果不存在就创建它.这将减少我们的代码而不是让我们自己检查. get_or_create()方法返回(object,created)元组.如果没有在数据库找到,那么这个object参数就是get_or_create()方法创造的实例.如果这个实体不存在,那么这个方法就返回和这个实体相符的实例.created是一个布尔值;如果get_or_create()创建模型实体的话它会返回true. [0]会返回object元组的第一个位置,这个其他编程语言一样,Python使用zero-based numbering. official Django documentation 可以查看get_or_vreate()方法的详细资料.
+当保存退出以后,我们可以在DJango项目根目录执行命令.
+
+    python populate_rango.py
+
+    Starting Rango population script...
+    - Python - Official Python Tutorial
+    - Python - How to Think like a Computer Scientist
+    - Python - Learn Python in 10 Minutes
+    - Django - Official Django Tutorial
+    - Django - Django Rocks
+    - Django - How to Tango with Django
+    - Other Frameworks - Bottle
+    - Other Frameworks - Flask
+
+现在我们检查一下是否改变了数据库.重启Django服务,进入管理界面,查看新的目录和页面.如果点击Pages会看到下面.
+
+![admin4.png][10]
+
+虽然需要花费一些时间来写population script,但是在团队协作中可以分享给每个人.而且在单元测试中会有用处.
+
+
+8.阶段小结，加入模型，分5步进行.
+
++ 在你的应用里的models.py文件里创建新的模型.
++ 修改admin.py注册你新加的模块
++ 使用python manage.py makemigrations 记录数据库更改
++ 使用python manage.py migrate应用更改.这将会为你的模型在数据库里建立必要的结构
++ 为你的新模型创建/修改population script.
+
+总会有一些时候你不得不删除数据库.在这种情况下你需要运行migrate命令,然后是createsuperuser命令,为每个app执行sqlmigrate命令就可.
+
+9.练习,试着做下面的练习来巩固所学.
+
++ 增加目录模型views和likes属性并设置为0.
++ 更新 population script ,把Python目录设置成浏览128次和喜欢64次,Django目录浏览64次和喜欢32次,the Other Framenwork目录浏览32次,喜欢16次.
++ 查看part two of official Django tutorial .它将会巩固你所学同时学习更多关于如何定制管理界面.
+
+10.提示,如果你需要一些帮助的话,下面的提示会帮助你.
+
++ 修改Category模型,增加views和likes,它们的字段为IntegerFields.
++ 修改populate.py脚本里的add_cat函数,加入views和likes参数.一旦你可以获取目录c,你就可以通过c.views来修改浏览次数,likes也一样.
++ 为了定制管理界面,你需要修改rango/admin.py文件,创建PageAdmin类,这个类继承自admin.ModelAdmin.
++ 在PageAdmin类里,加入list_display = ('title', 'category', 'url').
++ 最后注册PageAdmin类到Django管理界面.需要修改admin.site.register(Page).在Rango的admin.py文件里修改成admin.site.register(Page, PageAdmin).
+
+
+## 模型,模板和视图
+
+现在我们已经建立了模型并且导入了一些数据,现在我们要把这些连一起.我们将会弄清楚如何在视图中访问数据以及如何通过模板展示数据.
+
+### 基本流程:数据驱动页面
+
+在Django中创建数据驱动页面必须执行以下5步.
+
+    1.首先,在你应用的views.py文件中导入你要添加的模型.
+    2.在视图里访问模型,导入你需要的数据.
+    3.把模型的数据传递给模板.
+    4.设置模板给用户呈现数据.
+    5.如果还没有映射URL,映射一下吧.
+
+上面的步骤告诉你如何使用Django里的模型,视图和模板.
+
+### 展示rango主页上的目录
+
+我们需要在rango的主页显示5个最多的目录.
+
+1.导入需要的模型
+
+为了达到目的,我们需要完成上面的步骤.首先,打开rango/view.py并导入rango的models.py文件的Category模块(Category应该已经在上章练习中增加了likes，views等字段)
+
+    # Import the Category model
+    from rango.models import Category
+
+2.修改index视图
+
+有了第一步,我们需要修改index()函数.让我们回想一下,这个index()函数负责管理主页的视图.修改如下.
+
+    from rango.models import Category
+    def index(request):
+        category_list = Category.objects.order_by('-likes')[:5]
+        context_dict = {'categories': category_list}
+        return render(request, 'rango/index.html', context_dict)
+
+这里我们做了第2步和第3步.首先,我们访问Category模型得到5个最多的目录.这里用order_by()方法对喜欢的数量进行降序排序,注意带着'-'.最后我们取前5个目录保存到category_list
+
+当访问数据库结束,我们把这个列表(category_list)传给了字典context_dict.这个字典同时会作为render()的参数返回给模板.
+
+警告:注意Category模型包含likes字段.增添它的操作在前面章节的练习里,你需要完成它们.
+
+3.修改index模板
+
+修改完视图后,最后剩下的就是更改rango/index.html模板了.代码如下.
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Rango</title>
+    </head>
+
+    <body>
+        <h1>Rango says...hello world!</h1>
+
+        {% if categories %}
+            <ul>
+                {% for category in categories %}
+                <li>{{ category.name }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <strong>There are no categories present.</strong>
+        {% endif %}
+
+        <a href="/rango/about/">About</a>
+    </body>
+    </html>
+
+这里我们用了Django模板语言里的if和for控制语句.在页面的<body>里我们检查categories是否为空(例如,{% if categories %}).
+
+如果不为空,会建立一个无序HTML列表(在`<ul>`标签里).for循环({% for category in categories %})会依次在`<li>`标签里打印出每个目录的名字({{ category.name }}).
+
+如果不存在categories,将会输出There are no categories present..
+
+作为模板语言,所有的命令都包含在{%和%}标签里,所有的变量都在{{和}}里.
+
+如果访问 http://127.0.0.1:8000/rango/ ,如下图所示.
+
+![rango1.png][11]
+
+### 创建详细页面
+
+通过rango的详细描述,我们需要列出目录的每个页面.现在我们需要克服许多困难.我们需要创建一个新的视图作为参数.我们同时需要创建URL模式和URL字符串来对应每个目录的名字.
+
+1.URL设计与映射
+
+让我们着手解决URL问题.有一种方法是为我们的目录在URL中设立唯一的ID,我们可以创建像/rango/category/1/或者/rango/category/2/,这里的数字1和2就是它们的ID.但是这样做对我们来说不太好理解.尽管我们知道数字关联着目录,但我们怎么知道1和2代表哪个目录呢?用户不试一下就不会知道.
+
+另一种方法就是用目录名作为URL./rango/category/Python/将会返回给我们关于Python的目录.这是一个简单的,可读的URL.
+
+注意:对于网页来说,设计一个简洁的URL是至关重要的.
+
+2.为Category表增加Slug字段
+
+为了建立简洁的url我们需要在Category模型里增加slug字段.首先我们需要从django导入slugify函数,这个函数的作用是把空格用连字符代替,例如"how do i create a slug in django"将会转换成"how-do-i-create-a-slug-in-djang".
+
+    警告:虽然你能在URL中用空格,但是它们并不安全.
+
+接下来我们将会重写Category模型的save方法,我们将会调用slugify方法并更新slug字段.注意任何时候目录名称更改都会更改slug.像下面一样修改模型.
+
+    from django.template.defaultfilters import slugify
+
+    class Category(models.Model):
+        name = models.CharField(max_length=128, unique=True)
+        views = models.IntegerField(default=0)
+        likes = models.IntegerField(default=0)
+        slug = models.SlugField(unique=True)
+
+        def save(self, *args, **kwargs):
+                self.slug = slugify(self.name)
+                super(Category, self).save(*args, **kwargs)
+
+        def __unicode__(self):
+                return self.name
+
+先删除db.sqlite3数据库文件，现在需要运行下面的命令更新模型和数据库.
+
+    rm db.sqlite3
+    python manage.py migrate
+    python manage.py makemigrations rango
+    python manage.py migrate
+
+因为我们slug没有设置默认值,而且模型中已经加入进数据,所以migrate命令将会给你两个选项.选择提供默认值选项并输入默认值''.它会马上进行修改.现在重新运行population脚本.因为每个目录都会执行save方法,所以重写的save方法将会被执行修改slug字段.运行Django服务,你讲会在管理界面看到修改的数据.
+
+在管理界面你或许希望在填写目录名的时候自动填充slug字段.按照下面的方法修改rango/admin.py.
+
+    from django.contrib import admin
+    from rango.models import Category, Page
+
+    class CategoryAdmin(admin.ModelAdmin):
+        prepopulated_fields = {'slug':('name',)}
+
+    admin.site.register(Category, CategoryAdmin)    #注册类装饰
+    admin.site.register(Page)
+
+在管理界面尝试增加新的目录.看到了吧!现在我们可以加入slug字段用作我们的url.
+
+
+3.目录视图函数
+
+在rango/views.py中,我们需要导入Page模型.然后加入我们的category()视图:如下.
+
+    from rango.models import Page
+    def category(request, category_name_slug):
+        context_dict = {}
+        try:
+            category = Category.objects.get(slug=category_name_slug)
+            context_dict['category_name'] = category.name
+            pages = Page.objects.filter(category=category)
+            context_dict['pages'] = pages
+            context_dict['category'] = category
+        except Category.DoesNotExist:
+            pass
+        return render(request, 'rango/category.html', context_dict)
+
+和index()视图一样我们的新视图也要执行同样的基本步骤.我们需要定义一个字典,然后尝试从模型中导出数据,并把数据添加到字典里.我们通过参数category_name_slug的值来决定是哪个目录.如果在Category模型中找到目录,我们就会把context_dict字典传递给相关页面.
+
+4.目录模板
+
+现在为我们的新视图创建模板.在<workspace>/itcast_project/templates/rango/目录创建category.html.
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Rango</title>
+    </head>
+
+    <body>
+        <h1>{{ category_name }}</h1>
+        {% if category %}
+            {% if pages %}
+            <ul>
+                {% for page in pages %}
+                <li><a href="{{ page.url }}">{{ page.title }}</a></li>
+                {% endfor %}
+            </ul>
+            {% else %}
+                <strong>No pages currently in category.</strong>
+            {% endif %}
+        {% else %}
+            The specified category {{ category_name }} does not exist!
+        {% endif %}
+    </body>
+    </html>
+
+上面的HTML代码同样给我们展示了如何把数据通过字典传递给模板.我们用到了category_name变量和category和pages对象.如果category在模板上下文并没有定义,或者在数据库并没有发现这个目录,那么就会提示一个友好的错误信息.相反的话如果存在,我们将会检查pages.如果pages没有被定义或者不存在元素,我们同样也会呈现友好的错误提示.否则的话目录里包含的页面就会写入HTML里面.对于在pages列表的每个页面我们都会展示它的title和url.
+
+注意:Django模板包含{% if %}标签，是检测对象是否在模板上下文的好方法.尝试在你的代码里使用以减少错误的发生.
+
+
+5.参数化的URL映射
+
+现在让我们来看看如何把category_name_url参数值传递给category().我们需要修改rango的urls.py文件和urlpatterns元组.
+
+    urlpatterns = patterns('',
+        url(r'^$', views.index, name='index'),
+        url(r'^about/$', views.about, name='about'),
+        url(r'^category/(?P<category_name_slug>[\w\-]+)/$', views.category,name='category'),)  # New!
+
+
+你能看到当正则表达式r'^(?P<category_name_slug>\w+)/$匹配时会调用view.category()函数.我们的正则表达式会匹配URL斜杠前所有的字母数字(例如 a-z, A-Z, 或者 0-9)和连字符(-).然后把这个值作为category_name_slug参数传递给views.category(),这个参数必须在强制的request参数之后.
+
+注意:当你希望参数化URL时,一定要确保你的URL模式会正确匹配参数.为了更进一步的了解,让我们看一看上面的例子. url(r'^category/(?P<category_name_slug>[\w\-]+)/$', views.category, name='category') 我们可以从这里找到在category/和后面的/之间的字符串,并把它作为参数category_name_slug传递给views.category()参数.例如,URLcategory/python-books/将会返回的category_name_slug参数是python-books. 需要知道的是所有的视图函数必须带至少一个参数.这个参数是`request`它会提供HTTP请求用户的相关信息。当参数化URL时,可以给视图添加已经命名的参数.使用上面的例子,我们的category视图是这样的. def category(request, category_name_slug): 附加参数的位置不重要,重要的是在URL模式中定义的参数名称.注意如何为我们的视图在URL模式匹配中定义category_name_slug参数.
+
+6.修改index模板
+
+虽然我们的视图已经建立了,但是还要做许多工作.我们的index模板需要修改并提供给用户category列表.我们可以通过slug为index.htnl模板中添加目录页面.
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Rango</title>
+    </head>
+
+    <body>
+        <h1>Rango says..hello world!</h1>
+
+        {% if categories %}
+            <ul>
+                {% for category in categories %}
+                <!-- Following line changed to add an HTML hyperlink -->
+                <li>
+                <a href="/rango/category/{{ category.slug }}">{{ category.name }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+       {% else %}
+            <strong>There are no categories present.</strong>
+       {% endif %}
+
+    </body>
+    </html>
+
+这里为每个列表元素(`<li>`)增加一个HTML超链接(`<a>`).超链接有一个href属性,我们用{{ category.slug}}来定义目标URL.
+
+
+7.Demo
+
+让我们访问rango主页.你将会看到列出所有的目录.这些目录都是可以点击的链接.点击Python将会带你王文Python目录视图,如下图所示.如果你看到了像Official Python Tutorial列表,说明你已经成功了建立视图.试着访问不存在的目录,比如/rango/category/computers,你将会看到页面不存在的信息.
+
+![rango2.png][12]
+
+8.练习
+
++ 修改index页面也包含5个最多访问的页面.
+
+9.提示
+
++ 修改population脚本,为每个页面增加浏览次数.
+
+## 有趣的表单
+
+Django自带表单系统使在web上收集用户信息变得简单.通过Django’s documentation on forms我们知道表单处理功能包含以下:
+
++ 显示一个HTML表单自动生成的窗体部件(比如一个文本字段或者日期选择器).
++ 用一系列规则检查提交数据.
++ 验证错误的情况下将会重新显示表单.
++ 把提交的表单数据转化成相关的Python数据类型.
+
+使用Django表单功能最大的好处就是它可以节省你的大量时间和HTML方面的麻烦.这部分我们将会注重如何通过表单让用户增加目录和页面.
+
+1.基本流程
+
+基本步骤包括创建表单和允许用户通过表单输入数据.
+
++ 在Django应用目录创建forms.py目录来存储和表单相关的类.
++ 为每个使用表单的模块创建ModelForm类.
++ 定制你的表单.
++ 创建或修改表单的视图,包括展示表单,存储表单数据,当用户输入错误数据(或者根本没有输入)时显示错误标志.
++ 创建或修改你表单的模板.
+
+为新视图增加urlpattern映射(如果你创建了一个新的).
+这个流程将会比先前的都复杂些,我们创建的视图也会非常复杂.但是孰能生巧,如果多练几次就非常好掌握了.
+
+2.页面和目录表单
+
+首先,我们需要在rango应用目录里创建叫做forms.py文件.尽管这步我们并不需要,我们可以把表单放在models.py里,但是这将会使我们的代码简单易懂.
+
+在rango的forms.py模块里我们将会创建一些继承自ModelForm的类.实际上,ModelForm是一个帮助函数,它允许你在一个已经存在的模型里创建Django表单.因为我们定义了两个模型(Category和Page),我们将会分别为它们创建ModelForms.
+
+在rango/forms.py添加下面代码:
+
+    #coding:utf-8
+    from django import forms
+    from rango.models import Page, Category
+
+    class CategoryForm(forms.ModelForm):
+        name = forms.CharField(max_length=128, help_text="Please enter the category name.")
+        views = forms.IntegerField(widget=forms.HiddenInput(), initial=0)
+        likes = forms.IntegerField(widget=forms.HiddenInput(), initial=0)
+        slug = forms.CharField(widget=forms.HiddenInput(), required=False)
+
+        # 内部类
+        class Meta:
+            # model建立表单和模型类的关联，fields里包含表单显示出来的字段
+            model = Category
+            fields = ('name',)
+
+    class PageForm(forms.ModelForm):
+        title = forms.CharField(max_length=128, help_text="Please enter the title of the page.")
+        url = forms.URLField(max_length=200, help_text="Please enter the URL of the page.")
+        views = forms.IntegerField(widget=forms.HiddenInput(), initial=0)
+
+        class Meta:
+            # model建立表单和模型类的关联，排除exclude里包含的字段，其它字段显示
+            model = Page
+            exclude = ('category',)
+            #fields = ('title', 'url', 'views')
+
+
+值得注意的是Django1.7+需要通过fields指定包含的字段,或者通过exclude指定排除的字段.
+
+Django为我们提供了许多定制表单的方法.在上面的例子中,我们指定了我们想要展示字段的窗口部件.例如在我们的PageForm类中,我们为title字段定义forms.CharField,为url字段定义forms.URLField.两个字段都为用户提供文本输入.注意字段里包含max_length参数,它定义字段最大长度.
+
+可以看到在每个表单都包含浏览和喜欢的IntegerField字段.我们可以在参数里设置widget=forms.Hiddeninput()来隐藏窗口组件,设置initial=0来设置默认值为0.这是不用用户去自己设置字段为0的一种方法.然而可以在PageForm看到,尽管我们隐藏了字段,但是我们还是得在表单里包含字段.如果fields排除了views,那么表单将不包含字段(尽管已经定义了)而且将不会返回给模型0值.由于模型建立的不同有可能会引起一个错误.如果在模型里我们把这些字段定义为default=0那么我们可以自动的返回默认值,从而避免not null错误.在这种情况下就不需要隐藏字段了.在表单里我们也包含了slug字段并设置为widget=forms.HiddenInput()值,这里我们并没给他设置初始值或者默认值,而是设置为不需要(required=False).这是因为我们的模型将会负责填充字段.实际上,当你定义模型和表单时一定要注意表单一定要包含和传递所有的数据.
+
+除了CharField和IntegerField组件还有许多.例如,Django提供了EmailField(e-mail地址入口),ChoiceField(输入按钮)和DateField(日期/时间入口).有许多其他不同种类字段可以使用,他们可以为你检查执行错误(例如是否提供了一个有效的整数?).强烈建议你看一下official Django documentation on widgets来定制自己的组件.
+
+或许继承ModelForm最大的作用就是需要定义我们要给哪个模型提供表单.我们通过Meta类来实现.在Meta类设置model属性为我们需要使用的模型.例如CategoryForm类引用Category模型.这对Django创建我们想要的模型表单至关重要.它还可以帮助我们在存储和展示表单数据时获取错误.
+
+我们也可以用Meat类来定义我们希望包括的表单字段.用fields元组来定义所需包含的字段.
+
+`注意:强烈建议查看 official Django documentation on forms来获取更多.`
+
+3.创建增加目录视图
+
+创建CategoryForm类以后,我们需要创建一个新的视图来展示表单并传递数据.在rango/views.py中增加如下代码.
+
+    from rango.forms import CategoryForm
+
+    def add_category(request): 
+        if request.method == 'POST':
+            form = CategoryForm(request.POST)
+            if form.is_valid():
+                form.save(commit=True)
+                return index(request)
+            else:
+                print form.errors
+        else:
+            form = CategoryForm()
+        return render(request, 'rango/add_category.html', {'form': form})
+
+
+新的add_category()视图增加几个表单的关键功能.首先,检查HTTP请求方法是GET还是POST.我们根据不同的方法来进行处理,例如展示一个表单(如果是GET)或者处理表单数据(如果是POST) ,所有表单都是相同URL.add_category()视图处理以下三种不同情况:
+
++ 为添加目录提供一个新的空白表单;
++ 保存用户提交的数据给模型,并转向到Rango主页;
++ 如果发生错误,在表单里展示错误信息.
+
+
+Django表单处理数据是用户浏览器的HTTPPOST请求实现.它不仅可以存储表单数据,而且还能对每个表单字段自动生成错误信息.这就意味着Django将不会存储表单的错误信息以保护数据库的数据完整性.例如如果目录名为空的话将会返回不能为空的错误.
+
+注意到render()中将会调用add_category.html模板,这个模板包含表单和页面.
+
+
+4.创建增加目录模板
+
+创建templates/rango/add_category.html文件.
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Rango</title>
+    </head>
+    <body>
+        <h1>Add a Category</h1>
+
+        <form id="category_form" method="post" action="/rango/add_category/">
+
+            {% csrf_token %}
+            {% for hidden in form.hidden_fields %}
+                {{ hidden }}
+            {% endfor %}
+
+            {% for field in form.visible_fields %}
+                {{ field.errors }}
+                {{ field.help_text }}
+                {{ field }}
+            {% endfor %}
+
+            <input type="submit" name="submit" value="Create Category" />
+        </form>
+    </body>
+    </html>
+
+
+注意:使用隐藏和可见表单字段是因为HTTP是无状态协议.你不可以在两个不同的HTTP请求之间保持状态,因为实现起来相当复杂.为了摆脱这个限制,创建隐藏的HTML表单字段可以使web应用传递给用户HTML表单重要的数据,只有用户提交的时候才会返回数据.
+可能你也注意到了代码{% csrf_token %},这是跨站请求伪造令牌,有助于保护我们提交表单的HTTPPOST方法的安全.Django框架要求使用CSRFtoken.如果忘记在你的表单里包含CSRF令牌,有可能会在提交表单时遇到错误.查看 official Django documentation on CSRF tokens 以获取更多信息.
+
+
+5.映射增加目录视图
+
+现在我们需要映射add_category()视图.在模板里我们使用/rango/add_category/URL来提交.所以我们需要修改rango/urls.py的urlpattterns.
+
+    urlpatterns = patterns('',
+        url(r'^$', views.index, name='index'),
+        url(r'^about/$', views.about, name='about'),
+        url(r'^add_category/$', views.add_category, name='add_category'), # NEW MAPPING!
+        url(r'^category/(?P<category_name_slug>[\w\-]+)/$', views.category,    name='category'),
+    )
+
+6.修改主页内容
+
+作为最后一步,让我们在首页里加入链接.修改rango/index.html文件,在`</body>`前添加如下代码.
+
+`<a href="/rango/add_category/">Add a New Category</a><br />`
+
+7.Demo
+
+现在试一试!启动Django服务,进入http://127.0.0.1:8000/rango/.用新加的链接跳转到增加目录页面,然后增加页面.下图是增加目录和首页截图.
+
+![rango3.png][13]
+
+
+8.创建增加页面视图
+
+下一步是要求用户对于给出的目录增加页面.我们需要重复上面相同的流程，创建一个新的视图(add_page()),一个新的模板(rango/add_page.html),URL映射和在目录页面增加一个链接.
+
+    from rango.forms import PageForm
+
+    def add_page(request, category_name_slug):
+        try:
+            cat = Category.objects.get(slug=category_name_slug)
+        except Category.DoesNotExist:
+            cat = None
+
+        if request.method == 'POST':
+            form = PageForm(request.POST)
+            if form.is_valid():
+                if cat:
+                    page = form.save(commit=False)
+                    page.category = cat
+                    page.views = 0
+                    page.save()
+                    # probably better to use a redirect here.
+                    return category(request, category_name_slug)
+                else:
+                    print form.errors
+        else:
+            form = PageForm()
+
+        context_dict = {'form':form, 'category': cat}
+        return render(request, 'rango/add_page.html', context_dict)
+
+9.创建添加页面模板
+
+创建rango/add_page.html文件
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+	<title>Rango</title>
+    </head>
+    <body>
+	<h1>Add a page</h1>
+	<form id="page_form" method="post" >
+	{% csrf_token %}
+	{% for hidden in form.hidden_fields %}
+		{{hidden}}
+	{% endfor %}
+
+	{% for field in form.visible_fields %}
+		{{ field.errors }}
+		{{ field.help_text }}
+		{{ field }}
+	{% endfor %}
+		<input type="submit" name="submit" value="Create Page" />
+		<input type="reset" value="reset" id="reset" name="reset" />
+	</form>
+    </body>
+    </html>
+
+10.添加页面URL映射
+
+    urlpatterns = patterns('',
+        url(r'^$', views.index, name='index'),
+        url(r'^about/$', views.about, name='about'),
+        url(r'^add_category/$', views.add_category, name='add_category'), # NEW MAPPING!
+        url(r'^category/(?P<category_name_slug>[\w\-]+)/$', views.category,    name='category'),
+        url(r'^category/(?P<category_name_slug>[\w\-]+)/add_page/$', views.add_page, name='add_page'),
+    )
+
+11.修改category视图
+
+    def category(request, category_name_slug):
+        context_dict = {} 
+        try:
+            category = Category.objects.get(slug=category_name_slug)
+            context_dict['category_name'] = category.name
+            pages = Page.objects.filter(category=category)
+            context_dict['pages'] = pages
+            context_dict['category'] = category
+	    context_dict['category_name_slug']=category_name_slug #新加
+        except Category.DoesNotExist:
+            pass
+        return render(request, 'rango/category.html', context_dict)
+
+12.修改category.html
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <title>Rango</title>
+    </head>
+
+    <body>
+    <h1>{{ category_name }}</h1>
+
+    {% if category %}
+        {% if pages %}
+        <ul>
+            {% for page in pages %}
+            <li><a href="{{ page.url }}">{{ page.title }}</a></li>
+            {% endfor %}
+        </ul>
+        {% else %}
+            <strong>No pages currently in category.</strong>
+        {% endif %}
+    {% else %}
+        The specified category {{ category_name }} does not exist!
+    {% endif %}
+    <a href="/rango/category/{{category_name_slug}}/add_page/">Add a New page</a><br />
+    </body>
+    </html>
+
+13.二次处理表单（选作）
+
+我们Page模型有一个url属性设置为URLField类型.在相应的HTML表单,Django希望任何文本输入的URL字段是一个完整的URL.然而,用户能发现输入像http://www.url.com这种形式有些繁琐。
+
+设想有时候用户输入并不是一定正确,我们可以重写ModelForm模块里clean()方法.这个方法会在表单数据存储到模型实例之前被调用,所以它可以让我们验证甚至修改用户输入的数据.在我们上面的例子中,我们可以检查url字段的值是否以http://开头，如果不是，我们可以在用户前面添加上http://.
+
+    class PageForm(forms.ModelForm):
+        ...
+        #url = forms.URLField(max_length=200, help_text="Please enter the URL of the page.")
+        url = forms.CharField(max_length=200, help_text="Please enter the URL of the page.")
+
+ 以下实验只能把class PageForm中，URLField字段换成CharField字段。
+
+
+    class PageForm(forms.ModelForm):
+
+    ...
+
+        def clean(self):
+            cleaned_data = self.cleaned_data
+            url = cleaned_data.get('url')
+            if url and not url.startswith('http://'):
+                url = 'http://' + url
+                cleaned_data['url'] = url
+
+            return cleaned_data
+
+在clean()方法里.
+
+表单数据的字典从ModelForm的cleaned_data属性获取.
+你希望检查的表单字段可以在cleaned_data字典中获取.使用.get()字典方法获取表单值.如果用户没有表单字段,那么cleaned_data字典就没有这项.在这种情况下.get()会返回None而不是引发异常.这将会是你的代码更加简洁!
+处理你希望处理的表单字段.如果输入了一个值,检查这个值.如果不是你希望的值,你可以在存储到cleaned_data字典之前增加一些逻辑来修改这个值.
+必须每次都是以返回cleaned_data字典来结束clean()方法.如果没有将会得到错误提示.
+这个小例子说明如何在表单数据存储之前进行修改.这是非常方便的,尤其是有一些字段需要设定默认值时，或者表单中的数据发生了丢失.
+
+注意:重写方法是Django框架提供给我们增加应用额外功能的一种优雅的方法.就像ModelForm模块中clean()方法一样,Django提供了许多安全的方法可以供你重写.
+
+
+14.提示
+
++ 修改category()视图,把category_name_slug加入进视图的context_dict字典.
++ 修改category.html添加/rango/category/<category_name_url>/add_page/链接.
++ 确保只有请求的目录存在时才会出现链接，页面存在或不存在皆可.例如,在模板用{% if category %} .... {% else %} A category by this name does not exist {% endif %}.
++ 在rangp/urls.py修改URL映射.
+
+
+## 用户验证
+
+接下来将教会你Django的用户验证机制.我们将会使用Django标准包django.contrib.auth的auth应用.
+
++ 用户.
++ 权限:一系列的二进制标志(例如 yes/no)决定用户可以做或不可以做什么.
++ 群组:为不止一个用户提供权限的方法.
++ 用户登录的表单和视图工具,还有限制内容.
+
+在用户验证方面Django可以做很多.我们将从基础开始学习.这将非常有利于建立使用它们的信心和它们运行的理念.
+
+1.设置验证
+
+在你使用Django的验证之前,你需要确定在你的rango项目的settings.py文件里已经设置了相关内容.在settings.py文件里找到INSTALLED_APPS元组,检查django.contrib.auth和django.contrib.contenttypes是否在元组里.
+
+    INSTALLED_APPS = (
+        'django.contrib.admin',
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.messages',
+        'django.contrib.staticfiles',
+        'rango',
+    )
+
+
+django.contrib.auth为Django提供访问认证系统,django.contrib.contenttypes可以通过认证的应用程序来跟踪安装的数据库模型.
+
+注意:如果你需要在INSTALLED_APPS元组里添加auth应用,你需要用命令python manage.py migrate来进行更新数据库.
+
+密码默认将会用 PBKDF2 algorithm进行储存,它可以安全的保存你用户的数据.Django还提供了使用不同的哈希算法来提高安全等级.
+
+如果你希望控制使用哪种哈希算法,你需要在settings.py里加入PASSWORD_HASHERS元组:
+
+    PASSWORD_HASHERS = (
+        'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+        'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    )
+
+Django将会使用PASSWORD_HASERS里的第一个哈希算法(例如 settings.PASSWORD_HASHERS[0]).
+
+然而在默认情况下你不需要修改PASSWORD_HASHERS,Django默认添加django.contrib.auth.hashers.PBKDF2PasswordHasher.
+
+2.用户模型
+
+Django认证系统最重要的部分就是User对象,它位于django.contrib.auth.models.User.一个User对象代表了和Django应用交互的用户.
+
+User模型主要有5个属性.它们是:
+
++ 账户的用户名
++ 账户密码
++ 用户邮箱地址
++ 用户名
++ 用户姓
+
+模型也有其他一些属性像is_active(决定账户是活动还是非活动状态).查看official Django documentation on the user model,这里有完整的User模型属性列表.
+
+
+3.增加用户属性
+
+如果你希望在User模型里加入其他属性,你需要创建一个和User模型相关的模型.对于我们的rango应用,我们希望为我们的用户增加两个属性.我们希望包含:
+
++ URLField - 允许用户写明自己的网站
++ ImageField - 允许用户在它们的档案里添加图片
+
+可以再rango的models.py文件里增加模型.让我们加入UserProfile模型:
+
+    from django.contrib.auth.models import User
+
+    class UserProfile(models.Model):
+        user = models.OneToOneField(User)
+        website = models.URLField(blank=True)
+        picture = models.ImageField(upload_to='profile_images', blank=True)
+
+    def __unicode__(self):
+        return self.user.username
+
+注意我们在User模型里使用一对一关系.因为我们使用了默认User模型,我们需要在models.py文件中导入.
+
+在这里我们还可以直接继承User模型来增加这些字段.但是因为其他应用也可能需要存取User模型,所以这里不建议使用继承,而是使用一对一关系来代替.
+
+对于rango我们已经增加了两个字段来完善用户档案,还提供了一个`__unicode__()`方法返回实例名称.
+
+对于website和picture两个字段,我们都设置了blank=True.它会使所有的字段都为空,意味着用户不必为每一个都设置字段值.
+
+注意ImageField字段有一个upload_to属性.这个属性值连接着MEDIA_ROOT设置用来提供上传文档图片的路径.例如,MEDIA_ROOT设置为<workspace>/itcast_project/media/,那么upload_to=profile_imges将会使图片保存在<workspace>/itcast_project/media/profile_images/目录.
+
+`警告:DjangoImageField使用python图片库(pil).我们在安装Django时已经讲过如何安装pil.如果还没有安装现在就可以安装了.如果你没有安装pil,那么将会遇到pil模块不能找到的错误!
+定义完UserProfile模型,我们需要修改rango的admin.py文件使管理界面包含UserPrifile模型.在admin.py文件里添加如下.`
+
+    from rango.models import UserProfile
+
+    admin.site.register(UserProfile)
+
+注意:我们在修改模型后需要更新数据库.
+
+    python manage.py makemigrations rango
+    python manage.py migrate.
+
+4.创建用户注册表单，视图和模板
+
+注意:这里有许多现成的用户注册包可以使用,它们大大的减少创建注册和表单的繁琐程度.
+为用户提供注册服务我们需要以下几步:
+
++ 创建UserForm和UserProfileForm.
++ 增加创建新用户视图.
++ 增加展示UserForm和UserProfileForm的模板.
++ 映射URL.
++ 在主页放置注册页链接
+
+5.注册表单
+
+在rango/forms.py中,我们需要创建两个继承自forms.ModelForm的类.一个是为User模型创建的,一个是为UserProfile创建的.这两个继承自ModelForm的类给我们提供展示HTML表单所需要的表单字段.
+
+在rango/forms.py文件,让我们创建这两个类.
+
+    from django import forms
+    from django.contrib.auth.models import User
+    from rango.models import Category, Page, UserProfile
+
+    class UserForm(forms.ModelForm):
+        password = forms.CharField(widget=forms.PasswordInput())
+        class Meta:
+            model = User
+            fields = ('username', 'email', 'password')
+
+    class UserProfileForm(forms.ModelForm):
+        class Meta:
+            model = UserProfile
+            fields = ('website', 'picture')
+
+注意到在两个类中我们都加入了Meta类.在Meta类中所有定义都会被当做它的附加属性.每个Meta至少包含一个model字段,它可以和模型之间关联.例如在我们的UserForm类中就关联了User模型.在Django1.7+中你可以用fields或者exclude来定义你需要展示的字段.
+
+这里我们仅仅需要展示User模型的username,email和password字段,和UserProfile模型的website和picture字段.当用户注册的时候我们需要连接UserPrifile模型的user字段.
+
+看到了吧UserForm包含一个定义password属性.当User模型实例默认包含password属性时,HTML表单元素将不会隐藏密码.如果用户输入密码,那么这个密码就会可见.所以我们修改password属性作为CharField实例并使用PasswordInput()组建,这时用户输入就会被隐藏.
+
+
+6.创建register视图
+
+下面我们处理表单和表单输入的数据.在rango的views.py文件,加入下面视图函数:
+
+    from rango.forms import UserForm, UserProfileForm
+
+    def register(request):
+        registered = False
+        if request.method == 'POST':
+            user_form = UserForm(data=request.POST)
+            profile_form = UserProfileForm(data=request.POST)
+            if user_form.is_valid() and profile_form.is_valid():
+                user = user_form.save()
+                user.set_password(user.password)
+                user.save()
+                profile = profile_form.save(commit=False)
+                profile.user = user
+
+                if 'picture' in request.FILES:
+                    profile.picture = request.FILES['picture']
+
+                profile.save()
+                registered = True
+            else:
+                print user_form.errors, profile_form.errors
+        else:
+            user_form = UserForm()
+            profile_form = UserProfileForm()
+        return render(request,'rango/register.html',
+                        {'user_form': user_form, 
+                        'profile_form': profile_form, 
+                        'registered': registered} )
+
+
+和我们前面add_category()视图差不多,仅仅添加了两个不同的ModelForm实例,一个是User模型的,另一个是UserProfile模型的.如果用户上传图像我们还得需要处理它们.
+
+我们还需要创建两个模型实例之间的连接.创建新的User模型实例后,我们需要用profile.user = user把它关联到UserProfile实例.
+
+7.创建注册模板
+
+现在我们创建rang/register.html加入如下代码:
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Rango</title>
+    </head>
+
+    <body>
+        <h1>Register with Rango</h1>
+
+        {% if registered %}
+        Rango says: <strong>thank you for registering!</strong>
+        <a href="/rango/">Return to the homepage.</a><br />
+        {% else %}
+        Rango says: <strong>register here!</strong><br />
+
+        <form id="user_form" method="post" action="/rango/register/"
+                enctype="multipart/form-data">
+
+            {% csrf_token %}
+
+            <!-- Display each form. The as_p method wraps each element in a paragraph
+                 (<p>) element. This ensures each element appears on a new line,
+                 making everything look neater. -->
+            {{ user_form.as_p }}
+            {{ profile_form.as_p }}
+
+            <!-- Provide a button to click to submit the form. -->
+            <input type="submit" name="submit" value="Register" />
+        </form>
+        {% endif %}
+    </body>
+    </html>
+
+这个HTML模板使用registered变量来检测注册是否成功.当registered为False时模板会展示注册表单,否则,除了标题外它只会展示一条成功信息.
+
+`警告:你可能注意到在<form>元素里的enctype属性.当你希望用户通过表单上传文件时,必须把enctype设置成multipart/form-data.这个属性会让你的浏览器以特定的方式把表单数据返回给服务器.实际上,你的文件会被分成一块块的传输.想了解更多查看 this great Stack Overflow answer.你也应当记得加入CSRF令牌.确保在你的<form>属性里包含{% csrf_token %}.`
+
+
+8.视图register的URL映射
+
+现在为我们的新视图加入URL映射.在rango/urls.py文件里修改urlpatterns元组如下:
+
+
+    urlpatterns = patterns('',
+        url(r'^$', views.index, name='index'),
+        url(r'^category/(?P<category_name_slug>[\w\-]+)/$', views.category,name='category'), 
+        url(r'^add_category/$', views.add_category, name='add_category'), 
+        url(r'^category/(?P<category_name_slug>[\w\-]+)/add_page/$', views.add_page, name='add_page'),
+        url(r'^register/$', views.register, name='register'),  # New!
+    )
+ 
+新加入的模式的URL,rango/register/指向register()视图.
+
+9.主页建立索引
+
+最后,我们需要在主页index.html模板里加入链接.在添加目录链接后加入下面链接.
+
+    <a href="/rango/register/">Register Here</a>
+
+10.Demo
+现在你可以点击Register Here超链接进入到注册页面.现在试试看!启动你的Django服务试着注册一个账户.如果你愿意可以上传一个个人图片.你的注册表单看起来像下面一样.
+
+
