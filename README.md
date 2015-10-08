@@ -6,7 +6,7 @@ title: Django web
 [TOC]
 
 # 一个项目入门Django
-
+![aaa](http://img4.imgtn.bdimg.com/it/u=2825004365,1525084527&fm=21&gp=0.jpg "aaa")
 ## 学习目标
 
 + 建立一个Django项目,创立一个基本的Django应用.
