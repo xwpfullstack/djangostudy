@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html >
+<head>
+<script src="http://libs.baidu.com/jquery/1.10.2/jquery.min.js"></script>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>Welcome 7 Eleven </title>
+<script>
+var gdata;
+$(document).ready(function(){
+	var gdata;
+	$('#case').change(function(){
+		var a = $("#case").val();	
+		$('#ogoods').empty()
+		$.getJSON('/fruit/choice_goods/',{'a':a},function(ret){
+			/*for(var i in ret )
+			{
+				$('#ogoods').append("<option>"+ ret[i] +"</option>")
+			}*/
+			if(ret[0] === undefined)
+			{
+				$('#ogoods').append("<option>"+ '--------' +"</option>")
+			}
+			gdata=ret;
+			for (var i in ret)
+			{
+				$('#ogoods').append("<option>"+ ret[i].fields.name +"</option>")
+			}
+			$('#price').attr("value",ret[0].fields.price);
+			$('#sum').text("0");
+		})
+	})
+	$('#ogoods').change(function(){
+		var goodsname = $("#ogoods").val();
+		$("#count").val("0");
+		for (var i  in gdata)
+		{
+			if(goodsname==gdata[i].fields.name)
+			{
+						$('#price').attr("value",gdata[i].fields.price);
+			}
+		}
+	})
+
+	$('#count').focus(function(){
+		$(this).addClass("focus");
+		if($(this).val() == this.defaultValue){
+			$(this).val("");
+		}
+	}).blur(function(){
+		$(this).removeClass("focus");
+		if($(this).val() == ''){
+			$(this).val(this.defaultValue);
+		}
+	});
+
+	$('#count').change(function(){
+
+		var gcount = $("#count").val();
+		var gprice = $("#price").val();
+		$('#sum').text( gcount*gprice);
+	})
+
+	$('#commit').click(function(){
+		alert($("#sum").text());
+		var myDate = new Date();
+		$.ajax({
+			type:"POST",
+			url:"/fruit/goods_submit/",
+			data:{
+				userid:{{ username.id }},
+				qgoods:$('#ogoods').val(),
+				qcount:$('#count').val(),
+				qprice:$('#sum').text(),
+			},
+			success:function(ret)
+			{
+				alert(ret);
+			}
+		})
+	})
+
+});
+</script>
+</head>
+
+
+<body>
+{% csrf_token %}
+<h1>今天收银员:{{ username.name }}</h1>
+<h2>订单系统</h2>
+{% csrf_token %}
+<form action="">
+
+物品类型:&nbsp <select id="case" >
+<option value=404 >--------</option>
+{% for a in ucase %}
+<option value={{ a.id }}> {{ a.name }} </option>
+{% endfor %}
+</select>
+
+<br/>
+<br/>
+
+选择物品:&nbsp <select  id="ogoods">
+<option>---------</option>
+</select>
+
+<br/>
+<br/>
+
+物品单价:&nbsp <input type="text" id="price" value='0'><br>
+
+<br/>
+
+物品数量:&nbsp <input type="text" id="count" value='0'><br>
+
+<br/>
+
+总价：<p id="sum"></p>
+
+&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp
+<input type="button" id="commit" value="提交" />
+
+</form>
+</body>
+</html>

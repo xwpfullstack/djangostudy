@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>do ajax</title>
+	<script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.0.js"></script>
+
+	<script>
+    $(document).ready(function(){
+      $("#sum").click(function(){
+        var a = $("#a").val();
+        var b = $("#b").val();
+ 
+        $.get("/ajax/add/",{'a':a,'b':b}, function(ret){
+            $('#result').html(ret)
+        })
+      });
+    });
+</script>
+
+</head>
+<body>
+
+	<p>请输入两个数字</p>
+	<form action="/ajax/add/" method="get">
+		a:
+		<input type="text" id="a" name="a">
+		<br>
+		b:
+		<input type="text" id="b" name="b">
+		<br>
+		<p>
+			result:
+			<span id='result'></span>
+		</p>
+		<button type="button" id='sum'>提交</button>
+	</form>
+
+</body>
+</html>
