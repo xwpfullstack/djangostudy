@@ -1907,6 +1907,242 @@ extends命令携带一个参数,这个参数是要继承的模板(例如 rango/b
 
 记住,render()最后一个参数是一个字典,它可以添加额外的数据传递给Django模板引擎.因为我们没有什么额外的数据传递给模板所以这里为空.
 
+# AJAX
+
+AJAX即“Asynchronous Javascript And xML”（异步JavaScript和XML），是指一种创建交互式网页应用的网页开发技术。
+
+
+通过在后台与服务器进行少量数据交换，AJAX可以使网页实现异步更新。这意味着可以在不重新加载整个网页的情况下，对网页的某部分进行更新。
+
+传统的网页（不使用 AJAX）如果需要更新内容，必须重载整个网页页面。
+
+## 实例1:数据请求
+
+视图文件views.py
+
+```python
+    #views.py
+    from django.shortcuts import render
+    from django.http import HttpResponse
+
+
+    def index(request):
+        return render(request, 'index.html')
+
+
+    def add(request):
+        print request.GET['a']
+        print request.GET['b']
+        if request.is_ajax():
+            a = request.GET['a']
+            b = request.GET['b']
+            c = int(a) + int(b)
+            r = HttpResponse(str(c))
+        return r
+```
+
+模版文件index.html
+
+```html
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>do ajax</title>
+        <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.0.js"></script>
+
+        <script>
+        $(document).ready(function(){
+          $("#sum").click(function(){
+            var a = $("#a").val();
+            var b = $("#b").val();
+     
+            $.get("/ajax/add/",{'a':a,'b':b}, function(ret){
+                $('#result').html(ret)
+            })
+          });
+        });
+        </script>
+
+    </head>
+    <body>
+
+        <p>请输入两个数字</p>
+        <form action="/ajax/add/" method="get">
+            a:
+            <input type="text" id="a" name="a">
+            <br>
+            b:
+            <input type="text" id="b" name="b">
+            <br>
+            <p>
+                result:
+                <span id='result'></span>
+            </p>
+            <button type="button" id='sum'>提交</button>
+        </form>
+
+    </body>
+    </html>
+```
+
+url路由文件
+
+```python
+
+    from django.conf.urls import patterns, include, url
+    from django.contrib import admin
+
+
+    urlpatterns = patterns('',
+                           url(r'^admin/', include(admin.site.urls)),
+                           url(r'^ajax/', include('ajax.urls')),
+                           )
+```
+
+## 实例2:字典和列表
+
+视图文件views
+
+```python
+
+    from django.http import HttpResponse
+    from django.shortcuts import render
+    import json
+
+
+    def index(request):
+        return render(request, 'index.html')
+
+
+    def add(request):
+        a = request.GET['a']
+        b = request.GET['b']
+        a = int(a)
+        b = int(b)
+        return HttpResponse(str(a + b))
+
+
+    def ajax_list(request):
+        a = range(100)
+        return HttpResponse(json.dumps(a), content_type='application/json')
+
+
+    def ajax_dict(request):
+        name_dict = {'saywhat': 'I love python and Django', 'school': 'Itcastcpp'}
+        return HttpResponse(json.dumps(name_dict), content_type='application/json')
+```
+
+模版文件index
+
+```html
+
+    <!DOCTYPE html>
+    <html>
+    <body>
+    <p>请输入两个数字</p>
+    <form action="/add/" method="get">
+        a: <input type="text" id="a" name="a"> <br>
+        b: <input type="text" id="b" name="b"> <br>
+        <p>result: <span id='result'></span></p>
+        <button type="button" id='sum'>提交</button>
+    </form>
+
+
+    <div id="dict">Ajax 加载字典</div>
+    <p id="dict_result"></p>
+
+    <div id="list">Ajax 加载列表</div>
+    <p id="list_result"></p>
+
+
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.0.js"></script>
+    <script>
+        $(document).ready(function(){
+          // 求和 a + b
+          $("#sum").click(function(){
+            var a = $("#a").val();
+            var b = $("#b").val();
+
+            $.get("/add/",{'a':a,'b':b}, function(ret){
+                $('#result').html(ret);
+            })
+          });
+
+          // 列表 list
+          $('#list').click(function(){
+              $.getJSON('/ajax_list/',function(ret){
+                //返回值 ret 在这里是一个列表
+                for (var i = ret.length - 1; i >= 0; i--) {
+                  // 把 ret 的每一项显示在网页上
+                  $('#list_result').append(' ' + ret[i])
+                };
+              })
+          })
+
+          // 字典 dict
+          $('#dict').click(function(){
+              $.getJSON('/ajax_dict/',function(ret){
+                  //返回值 ret 在这里是一个字典
+                  $('#dict_result').append(ret.saywhat + ' ' + ret.school + '<br>');
+                  // 也可以用 ret['saywhat']
+              })
+          })
+        });
+    </script>
+    </body>
+    </html>
+```
+
+url路由文件
+
+```python 
+
+    from django.conf.urls import patterns, include, url
+    from django.contrib import admin
+
+    urlpatterns = patterns('',
+                           url(r'^admin/', include(admin.site.urls)),
+
+                           url(r'^$', 'ajax.views.index', name='home'),
+                           url(r'^add/$', 'ajax.views.add', name='add'),
+                           url(r'^ajax_list/$', 'ajax.views.ajax_list',
+                               name='ajax-list'),
+                           url(r'^ajax_dict/$', 'ajax.views.ajax_dict',
+                               name='ajax-dict'),
+
+                           )
+``` 
+
+
+## 实例3:超市管理系统
+
+关闭csrf验证
+
+```python
+
+    #csrf_exempt关闭csrf验证
+    from django.views.decorators.csrf import csrf_exempt
+    @csrf_exempt
+    def fun():
+        pass
+
+```
+
+代码见github： [超市管理][1]:https://github.com/xwpfullstack/djangostudy/tree/master/itproject4/mydeb_3
+[1]:https://github.com/xwpfullstack/djangostudy/tree/master/itproject4/mydeb_3 "https://github.com/xwpfullstack/djangostudy/tree/master/itproject4/mydeb_3"
+
+下载项目后执行
+    
+    python manage.py migrate 
+    python manage.py createsuperuser
+    python populate_fruit.py
+    python manage.py runserver
+
+浏览器输入```127.0.0.1:8000/fruit/```
+
+# Bootstrap
+
 # Django部署
 
 ![部署速查图](../figures/uwsgi.jpg)
