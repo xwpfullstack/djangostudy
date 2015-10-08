@@ -3,6 +3,8 @@ layout: post
 title: Django web
 ---
 
+[TOC]
+
 # 一个项目入门Django
 
 ## 学习目标
