@@ -1916,6 +1916,187 @@ AJAX即“Asynchronous Javascript And xML”（异步JavaScript和XML），是�
 
 传统的网页（不使用 AJAX）如果需要更新内容，必须重载整个网页页面。
 
+两种在客户端和服务器端进行请求-响应的常用方法是：GET 和 POST。
+
+    GET - 从指定的资源请求数据
+    POST - 向指定的资源提交要处理的数据
+
+## jQuery
+
+jQuery 库可以通过一行简单的标记被添加到网页中,jQuery 库的特性:
+
+    jQuery 是一个 JavaScript 函数库。
+    HTML 元素选取
+    HTML 元素操作
+    CSS 操作
+    HTML 事件函数
+    JavaScript 特效和动画
+    HTML DOM 遍历和修改
+    AJAX
+
+### 向您的页面添加 jQuery 库
+
+jQuery 库位于一个 JavaScript 文件中，其中包含了所有的 jQuery 函数。
+
+可以通过下面的标记把 jQuery 添加到网页中：
+```html
+
+    <head>
+    <script type="text/javascript" src="jquery.js"></script>
+    </head>
+
+```
+
+    请注意，<script> 标签应该位于页面的 <head> 部分。
+
+### 下载 jQuery
+
+共有两个版本的 jQuery 可供下载：一份是精简过的，另一份是未压缩的（供调试或阅读）。
+
+这两个版本都可从 jQuery.com 下载。
+
+1 和 2 就是1版本支持 ie 6 7 8， 2不支持 的。小版本的差异，会改写新版本浏览器的兼容，加些api等。
+
+库的替代
+百度 和 Microsoft 对 jQuery 的支持都很好。
+如果您不愿意在自己的计算机上存放 jQuery 库，那么可以从 百度或 Microsoft 加载 CDN jQuery 核心文件。
+
+使用百度的 CDN
+
+```html
+
+    <head>
+    <script type="text/javascript" src="http://libs.baidu.com/jquery/1.11.1/jquery.min.js"></script>
+    </head>
+``` 
+
+使用 Microsoft 的 CDN
+
+```html
+
+    <head>
+    <script type="text/javascript" src="http://ajax.microsoft.com/ajax/jquery/jquery-1.4.min.js"></script>
+    </head>
+```
+
+基础 jQuery 实例,下面的例子演示了 jQuery 的 hide() 函数，隐藏了 HTML 文档中所有的 <p> 元素。
+
+```html
+
+    <html>
+    <head>
+        <script type="text/javascript" src="http://libs.baidu.com/jquery/1.11.1/jquery.min.js"></script>
+        <script type="text/javascript">
+            $(document).ready(function(){
+                $("button").click(function(){
+                    $("p").hide();
+                });
+            });
+        </script>
+    </head>
+
+    <body>
+        <h2>This is a heading</h2>
+        <p>This is a paragraph.</p>
+        <p>This is another paragraph.</p>
+        <button type="button">Click me</button>
+    </body>
+    </html>
+```
+
+
+jQuery $.get() 方法
+
+    $.get() 方法通过 HTTP GET 请求从服务器上请求数据。
+    语法：
+    $.get(URL,callback);
+        必需的 URL 参数规定您希望请求的 URL。
+        可选的 callback 参数是请求成功后所执行的函数名。
+
+
+jQuery $.post() 方法
+
+    $.post() 方法通过 HTTP POST 请求从服务器上请求数据。
+    语法：
+    $.post(URL,data,callback);
+        必需的 URL 参数规定您希望请求的 URL。
+        可选的 data 参数规定连同请求发送的数据。
+        可选的 callback 参数是请求成功后所执行的函数名。
+## JSON
+
+JSON的全称是”JavaScript Object Notation”，意思是JavaScript对象表示法，它是一种基于文本，独立于语言的轻量级数据交换格式。XML也是一种数据交换格式，为什么没有选择XML呢？因为XML虽然可以作为跨平台的数据交换格式，但是在JS(JavaScript的简写)中处理XML非常不方便，同时XML标记比数据多，增加了交换产生的流量，而JSON没有附加的任何标记，在JS中可作为对象处理，所以我们更倾向于选择JSON来交换数据。
+
+### JSON 语法规则
+
+JSON 语法是 JavaScript 对象表示法语法的子集。
+
++ 数据在名称/值对中
++ 数据由逗号分隔
++ 花括号保存对象
++ 方括号保存数组
+
+JSON 名称/值对
+
++ JSON 数据的书写格式是：名称/值对。
++ 名称/值对包括字段名称（在双引号中），后面写一个冒号，然后是值：
+        "firstName" : "John"
+        这很容易理解，等价于这条 JavaScript 语句：
+        firstName = "John"
+
+JSON 值
+
++ 数字（整数或浮点数）
++ 字符串（在双引号中）
++ 逻辑值（true 或 false）
++ 数组（在方括号中）
++ 对象（在花括号中）
++ null
+
+JSON 对象
+
+    { "firstName":"John" , "lastName":"Doe" }
+    这一点也容易理解，与这条 JavaScript 语句等价：
+    firstName = "John"
+    lastName = "Doe"
+
+JSON 数组
+
+    {
+        "employees": [
+            { "firstName":"John" , "lastName":"Doe" },
+            { "firstName":"Anna" , "lastName":"Smith" },
+            { "firstName":"Peter" , "lastName":"Jones" }
+        ]
+    }
+
+JSON 使用 JavaScript 语法
+
+因为 JSON 使用 JavaScript 语法，所以无需额外的软件就能处理 JavaScript 中的 JSON。
+通过 JavaScript，您可以创建一个对象数组，并像这样进行赋值：
+例子
+
+```javascript
+
+    var employees = [
+        { "firstName":"Bill" , "lastName":"Gates" },
+        { "firstName":"George" , "lastName":"Bush" },
+        { "firstName":"Thomas" , "lastName": "Carter" }
+    ];
+```
+可以像这样访问 JavaScript 对象数组中的第一项：
+
+    employees[0].lastName;
+
+返回的内容是：
+
+    Gates
+
+可以像这样修改数据：
+
+    employees[0].lastName = "Jobs";
+
+JSON 文件的文件类型是 ".json"
+
 ## 实例1:数据请求
 
 视图文件views.py
