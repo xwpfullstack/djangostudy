@@ -2407,6 +2407,24 @@ nginx重启
 
     python manage.py collectstatic 
 
+
+## mysql数据库
+
+pip install MYSQL-python
+
+修改setting.py里面的DATABASES元组为
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql', 
+        'NAME': 'books',    #你的数据库名称
+        'USER': 'root',   #你的数据库用户名
+        'PASSWORD': '', #你的数据库密码
+        'HOST': '', #你的数据库主机，留空默认为localhost
+        'PORT': '3306', #你的数据库端口
+    }
+}
+
 ## git管理本地代码和服务器代码同步 
 
 ### 架设服务器端Git仓库 
