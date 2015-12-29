@@ -8,7 +8,7 @@ title: Django web
 # 一个项目入门Django
 
 ## 学习目标
-
+helloworld
 + 建立一个Django项目,创立一个基本的Django应用.
 + 为Django项目设立静态文件和其他文件
 + 使用Django的Model-View-Template(MVT)设计模式
