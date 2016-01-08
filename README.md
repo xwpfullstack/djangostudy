@@ -1616,7 +1616,7 @@ User模型主要有5个属性.它们是:
 第一个是通过user.is_authenticated()方法查看用户是否登录.user对象是通过request对象传递给视图的.下面是简单的例子.
 
     def some_view(request):
-        if not request.user.is_authenticated():
+        if request.user.is_authenticated():
             return HttpResponse("You are logged in.")
         else:
             return HttpResponse("You are not logged in.")
