@@ -8,7 +8,7 @@ title: Django web
 # 一个项目入门Django
 
 ## 学习目标
-helloworld
+
 + 建立一个Django项目,创立一个基本的Django应用.
 + 为Django项目设立静态文件和其他文件
 + 使用Django的Model-View-Template(MVT)设计模式
@@ -941,7 +941,7 @@ Django自带表单系统使在web上收集用户信息变得简单.通过Django�
 
 基本步骤包括创建表单和允许用户通过表单输入数据.
 
-+ 在Django应用目录创建forms.py目录来存储和表单相关的类.
++ 在Django应用目录创建forms.py来存储和表单相关的类.
 + 为每个使用表单的模块创建ModelForm类.
 + 定制你的表单.
 + 创建或修改表单的视图,包括展示表单,存储表单数据,当用户输入错误数据(或者根本没有输入)时显示错误标志.
@@ -1064,6 +1064,10 @@ Django表单处理数据是用户浏览器的HTTPPOST请求实现.它不仅可�
 
 注意:使用隐藏和可见表单字段是因为HTTP是无状态协议.你不可以在两个不同的HTTP请求之间保持状态,因为实现起来相当复杂.为了摆脱这个限制,创建隐藏的HTML表单字段可以使web应用传递给用户HTML表单重要的数据,只有用户提交的时候才会返回数据.
 可能你也注意到了代码{% csrf_token %},这是跨站请求伪造令牌,有助于保护我们提交表单的HTTPPOST方法的安全.Django框架要求使用CSRFtoken.如果忘记在你的表单里包含CSRF令牌,有可能会在提交表单时遇到错误.查看 official Django documentation on CSRF tokens 以获取更多信息.
+
+            
+            from django.views.decorators.csrf import csrf_exempt
+            @csrf_exempt
 
 
 5.映射增加目录视图
@@ -2474,6 +2478,57 @@ DATABASES = {
 ![全栈待学习任务](../figures/fullstack.jpg)
 
 
+### mode对应的类型
+
+1. 见 : https://docs.djangoproject.com/en/1.8/ref/models/fields/
+2. 命令行ipython查看
+        
+        from django.db import models 
+        model.  tab补齐
+
+
+        V=models.CharField(max_length=None[, **options])　　　　#varchar
+        V=models.EmailField([max_length=75, **options])　　　　#varchar
+        V=models.URLField([verify_exists=True, max_length=200, **options])　　　　#varchar
+        V=models.FileField(upload_to=None[, max_length=100, **options])　　　　#varchar
+        #upload_to指定保存目录可带格式，
+        V=models.ImageField(upload_to=None[, height_field=None, width_field=None, max_length=100, **options])
+        V=models.IPAddressField([**options])　　　　#varchar
+        V=models.FilePathField(path=None[, match=None, recursive=False, max_length=100, **options])　#varchar
+        V=models.SlugField([max_length=50, **options])　　　　#varchar，标签，内含索引
+        V=models.CommaSeparatedIntegerField(max_length=None[, **options])　　　　#varchar
+
+        V=models.IntegerField([**options])　　　　#int
+        V=models.PositiveIntegerField([**options])　　　　#int 正整数
+        V=models.SmallIntegerField([**options])　　　　#smallint
+        V=models.PositiveSmallIntegerField([**options])　　　　#smallint 正整数
+        V=models.AutoField(**options)　　　　#int；在Django代码内是自增
+        V=models.DecimalField(max_digits=None, decimal_places=None[, **options])　　　　#decimal
+        V=models.FloatField([**options])　　　　#real
+        V=models.BooleanField(**options)　　　　#boolean或bit
+        V=models.NullBooleanField([**options])　　　　#bit字段上可以设置上null值
+        V=models.DateField([auto_now=False, auto_now_add=False, **options])　　　　#date
+        #auto_now最后修改记录的日期；auto_now_add添加记录的日期
+        V=models.DateTimeField([auto_now=False, auto_now_add=False, **options])　　　　#datetime
+        V=models.TimeField([auto_now=False, auto_now_add=False, **options])　　　　#time
+        V=models.TextField([**options])　　　　#text
+        V=models.XMLField(schema_path=None[, **options])　　　　#text
+
+        ——————————————————————————–
+
+        V=models.ForeignKey(othermodel[, **options])　　　　#外键，关联其它模型，创建关联索引
+        V=models.ManyToManyField(othermodel[, **options])　　　　#多对多，关联其它模型，创建关联表
+        V=models.OneToOneField(othermodel[, parent_link=False, **options])　　　　#一对一，字段关联表属性
+
+### forms类型
+
+见: /home/itcast/.virtualenvs/itcast/lib/python2.7/site-packages/django/forms/fields.py
+
+        1.启动ipython
+        2.from django import forms
+        3.forms.fields 然后tab补齐显示所有forms类
+        4.help(forms.fields)　查看帮助文档
+
 ## 阿里云项目环境变量
 
     Django==1.7.8
@@ -2490,5 +2545,4 @@ DATABASES = {
     wheel==0.24.0
 
 
-未完待续
     
